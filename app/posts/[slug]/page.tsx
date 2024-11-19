@@ -1,12 +1,26 @@
 // app/posts/[slug]/page.tsx
 
+import fs from 'fs';
+import path from 'path';
+import matter from 'gray-matter';
 import { notFound } from 'next/navigation';
 
-// Simulated posts data (replace with actual data fetching logic)
-const posts = [
-    { slug: 'first-post', title: 'First Post', content: 'This is the first post.' },
-    { slug: 'second-post', title: 'Second Post', content: 'This is the second post.' },
-];
+const getPost = (slug: string) => {
+    const postsDirectory = path.join(process.cwd(), 'posts');
+    const filePath = path.join(postsDirectory, `${slug}.md`);
+
+    if (!fs.existsSync(filePath)) {
+        return null;
+    }
+
+    const fileContents = fs.readFileSync(filePath, 'utf8');
+    const { data, content } = matter(fileContents);
+
+    return {
+        title: data.title,
+        content,
+    };
+};
 
 // Define the `PostProps` interface to correctly type `params`
 //interface PostProps {
@@ -18,7 +32,7 @@ type Params = Promise<{ slug: string }>
 
 export default async function PostPage({ params }: { params: Params }) {
     const { slug } = await params;
-    const post = posts.find((post) => post.slug === slug);
+    const post = getPost(slug);
 
     if (!post) {
         // If the post is not found, display a 404 page
@@ -26,19 +40,24 @@ export default async function PostPage({ params }: { params: Params }) {
     }
 
     return (
-        <div>
-            <h1>{post.title}</h1>
-            <div>{post.content}</div>
+        <div className="font-sans p-8 bg-gray-100">
+            <h1 className="text-4xl text-center text-gray-800 mb-8">{post.title}</h1>
+            <div className="prose mx-auto">
+                {post.content}
+            </div>
         </div>
     );
 };
 
 // Define generateStaticParams to specify dynamic slugs
-export async function generateStaticParams() {
-    // Return all slugs for the dynamic pages
-    return posts.map((post) => ({
-        slug: post.slug,  // Specify the slug for each post.
-    }));
-}
+export const generateStaticParams = async () => {
+    const postsDirectory = path.join(process.cwd(), 'posts');
+    const filenames = fs.readdirSync(postsDirectory);
+
+    return filenames.map((filename) => {
+        const slug = filename.replace(/\.md$/, '');
+        return { slug };
+    });
+};
 
 
