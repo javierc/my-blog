@@ -4,6 +4,7 @@ import fs from 'fs';
 import path from 'path';
 import matter from 'gray-matter';
 import { notFound } from 'next/navigation';
+import MarkdownRenderer from '../../components/MarkdownRenderer';
 
 const getPost = (slug: string) => {
     const postsDirectory = path.join(process.cwd(), 'posts');
@@ -43,11 +44,12 @@ export default async function PostPage({ params }: { params: Params }) {
         <div className="font-sans p-8 bg-gray-100">
             <h1 className="text-4xl text-center text-gray-800 mb-8">{post.title}</h1>
             <div className="prose mx-auto">
-                {post.content}
+                <MarkdownRenderer content={post.content} />
             </div>
         </div>
     );
 };
+
 
 // Define generateStaticParams to specify dynamic slugs
 export const generateStaticParams = async () => {
